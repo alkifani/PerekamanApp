@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
+
+class SpeedDisplay extends StatefulWidget {
+  @override
+  _SpeedDisplayState createState() => _SpeedDisplayState();
+}
+
+class _SpeedDisplayState extends State<SpeedDisplay> {
+  double _currentSpeed = 0.0;
+  double? _velocity;
+  double? _highestVelocity;
+  StreamController<double> _velocityUpdatedStreamController =
+  StreamController<double>();
+
+  StreamSubscription<Position>? _positionStreamSubscription;
+  GeolocatorPlatform locator = GeolocatorPlatform.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _startLocationStream();
+  }
+
+  void _startLocationStream() {
+    _positionStreamSubscription = locator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+      ),
+    ).listen((Position position) {
+      _onAccelerate(position.speed);
+    });
+  }
+
+  /// Callback that runs when velocity updates, which in turn updates stream.
+  void _onAccelerate(double speed) {
+    locator.getCurrentPosition().then(
+          (Position updatedPosition) {
+        _velocity = (speed + updatedPosition.speed) / 2;
+        if (_highestVelocity == null || _velocity! > _highestVelocity!) {
+          _highestVelocity = _velocity;
+        }
+        _velocityUpdatedStreamController.add(_velocity!);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _velocityUpdatedStreamController.close();
+    _positionStreamSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Current Speed: $_currentSpeed m/s',
+            style: TextStyle(fontSize: 16),
+          ),
+          // Text(
+          //   '$_currentSpeed m/s',
+          //   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          // ),
+        ],
+      ),
+    );
+  }
+}
+
+// void main() {
+//   runApp(MaterialApp(
+//     home: Scaffold(
+//       appBar: AppBar(
+//         title: Text('Speed Display'),
+//       ),
+//       body: SpeedDisplay(),
+//     ),
+//   ));
+// }

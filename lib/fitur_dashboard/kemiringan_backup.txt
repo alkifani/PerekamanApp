@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'dart:async';
+
+class DashTilt extends StatefulWidget {
+  @override
+  _DashTiltState createState() => _DashTiltState();
+}
+
+class _DashTiltState extends State<DashTilt> {
+  String _gyroscopeData = "";
+  String _accelerometerData = "";
+  bool _gyroscopeUpdating = false;
+  bool _accelerometerUpdating = false;
+  String _timestamp = "";
+  StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
+  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSensorStreams();
+  }
+
+  void _startSensorStreams() {
+    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent gyroscopeEvent) {
+      if (_gyroscopeUpdating) return;
+      _gyroscopeUpdating = true;
+
+      Timer(Duration(seconds: 2), () {
+        setState(() {
+          _gyroscopeData =
+          "Gyroscope - X: ${gyroscopeEvent.x.toStringAsFixed(2)}, Y: ${gyroscopeEvent.y.toStringAsFixed(2)}, Z: ${gyroscopeEvent.z.toStringAsFixed(2)}";
+          //_timestamp = "Date Time: ${DateTime.now().toLocal().toString().substring(0, 19)}";
+        });
+        _gyroscopeUpdating = false;
+      });
+    });
+
+    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent accelerometerEvent) {
+      if (_accelerometerUpdating) return;
+      _accelerometerUpdating = true;
+
+      Timer(Duration(seconds: 2), () {
+        setState(() {
+          _accelerometerData =
+          "Accelerometer - X: ${accelerometerEvent.x.toStringAsFixed(2)}, Y: ${accelerometerEvent.y.toStringAsFixed(2)}, Z: ${accelerometerEvent.z.toStringAsFixed(2)}";
+        });
+        _accelerometerUpdating = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _gyroscopeSubscription?.cancel();
+    _accelerometerSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _gyroscopeData,
+          style: TextStyle(fontSize: 16, color: Colors.orange),
+          textAlign: TextAlign.center,
+        ),
+        //SizedBox(height: 20),
+        Text(
+          _accelerometerData,
+          style: TextStyle(fontSize: 16, color: Colors.orange),
+          textAlign: TextAlign.center,
+        ),
+        // Text(
+        //   _timestamp,
+        //   style: TextStyle(fontSize: 16),
+        //   textAlign: TextAlign.center,
+        // ),
+      ],
+    );
+  }
+}
